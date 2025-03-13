@@ -38,11 +38,21 @@ jobs:
     
     - name: Download BC AL Language Extension
       run: |
-        $baseUrl = "https://bcartifacts.azureedge.net/al-compiler"
-        $latestVersion = (Invoke-WebRequest -Uri "$baseUrl/versions.txt").Content.Trim().Split("`n")[-1]
+        # Create directory for AL Compiler
         New-Item -Path ".alpackages" -ItemType Directory -Force
-        Invoke-WebRequest -Uri "$baseUrl/$latestVersion/alccompiler.zip" -OutFile "alc.zip"
-        Expand-Archive -Path "alc.zip" -DestinationPath "alc" -Force
+        New-Item -Path "alc" -ItemType Directory -Force
+        
+        # Use Microsoft's vsix directly from their releases
+        Invoke-WebRequest -Uri "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-dynamics-smb/vsextensions/al/latest/vspackage" -OutFile "al-extension.vsix"
+        
+        # VSIX files are just ZIP files with a different extension
+        Rename-Item -Path "al-extension.vsix" -NewName "al-extension.zip"
+        Expand-Archive -Path "al-extension.zip" -DestinationPath "temp" -Force
+        
+        # Extract the compiler
+        Expand-Archive -Path "temp\extension\bin\Microsoft.Dynamics.Nav.CodeAnalysis.zip" -DestinationPath "alc" -Force
+        Remove-Item -Path "temp" -Recurse -Force
+        Remove-Item -Path "al-extension.zip" -Force
       shell: pwsh
     
     - name: Install AL Language Extension dependencies
