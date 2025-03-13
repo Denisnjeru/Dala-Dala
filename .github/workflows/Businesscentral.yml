@@ -11,6 +11,8 @@ jobs:
     runs-on: windows-latest
     
     env:
+      APP_NAME: Default Publisher_Dala-Dala_
+      APP_VERSION: '1.0.0.${{ github.run_number }}'
       BC_ADMIN_USER: ${{ secrets.BC_ADMIN_USER }}
       BC_ADMIN_PASSWORD: ${{ secrets.BC_ADMIN_PASSWORD }}
       BC_URL: ${{ secrets.BC_URL }}
@@ -33,11 +35,30 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-alpackages-
     
+    
+    - name: Download BC AL Language Extension
+      run: |
+        $baseUrl = "https://bcartifacts.azureedge.net/al-compiler"
+        $latestVersion = (Invoke-WebRequest -Uri "$baseUrl/versions.txt").Content.Trim().Split("`n")[-1]
+        New-Item -Path ".alpackages" -ItemType Directory -Force
+        Invoke-WebRequest -Uri "$baseUrl/$latestVersion/alccompiler.zip" -OutFile "alc.zip"
+        Expand-Archive -Path "alc.zip" -DestinationPath "alc" -Force
+      shell: pwsh
+    
     - name: Install AL Language Extension dependencies
       run: |
         Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2143311" -OutFile "al-compiler.vsix"
         mkdir -p ${env:USERPROFILE}\.alpackages
+      
+    - name: Set App Version
+      run: |
+        $appJsonPath = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "app.json"
+        $appJson = Get-Content $appJsonPath | ConvertFrom-Json
+        $appJson.version = $env:APP_VERSION
+        $appJson | ConvertTo-Json -Depth 100 | Set-Content $appJsonPath
+      shell: pwsh
     
+      
     - name: Download BC Symbols
       run: |
         New-Item -ItemType Directory -Force -Path ".alpackages"
@@ -45,8 +66,9 @@ jobs:
         
     - name: Compile AL App
       run: |
-        # Compile AL app code here
-        # Example: alc.exe /project:. /packagecachepath:.alpackages /out:./app.app
+        $alcExe = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "alc\bin\win32\alc.exe"
+        & $alcExe /project:$env:GITHUB_WORKSPACE /packagecachepath:$env:GITHUB_WORKSPACE\.alpackages /out:$env:GITHUB_WORKSPACE\$env:APP_NAME.app
+      shell: pwsh
         
     - name: Run AL Tests
       run: |
@@ -62,8 +84,10 @@ jobs:
     - name: Upload App Package
       uses: actions/upload-artifact@v4
       with:
-        name: app-package
-        path: ./app.app
+        name: ${{ env.APP_NAME }}
+        path: ${{ env.APP_NAME }}.app
+
+
     
     # Only continue to Docker build if this is a push to production (not PR)
     - name: Set build outputs
