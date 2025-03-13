@@ -49,7 +49,7 @@
 ### Prerequisites
 - Microsoft Dynamics 365 Business Central
 - Node.js and npm
-- Python 3.x / GO 
+- Python 3.x 
 - Docker and Docker Compose
 - Access to M-Pesa and banking APIs
 
@@ -58,3 +58,15 @@
    ```bash
    git clone https://github.com/yourusername/Dala-Dala.git
    cd Dala-Dala
+
+
+### Project Structure
+
+1. **.gitignore** 
+List of blobs for git to ignore. Affects commands like git add and git clean. You may use gitignore.io to generate a clean and useful gitignore file.
+
+2. **.alpackages/**
+Folder in a Business Central project functions as a local repository for extension packages (.app files) that your project depends on, including Microsoft base extensions, third-party extensions, and your own referenced extensions. This critical directory enables the AL compiler to resolve symbol definitions from dependencies, providing IntelliSense support and ensuring proper code compilation during development.
+
+3. **.test/**
+Unit tests, integration tests… go here.
