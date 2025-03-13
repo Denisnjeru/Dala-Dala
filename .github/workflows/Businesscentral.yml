@@ -1,0 +1,143 @@
+name: Business Central CI/CD Pipeline
+
+on:
+  push:
+    branches: [production]
+  pull_request:
+    branches: [main, production, staging]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    env:
+      BC_ADMIN_USER: ${{ secrets.BC_ADMIN_USER }}
+      BC_ADMIN_PASSWORD: ${{ secrets.BC_ADMIN_PASSWORD }}
+      BC_URL: ${{ secrets.BC_URL }}
+      BC_TENANT: ${{ secrets.BC_TENANT }}
+      
+    strategy:
+      max-parallel: 2
+      matrix:
+        bc-version: ['24.0']  # Business Central version
+        al-app-version: ['24.0.0.0']  # AL App version
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Cache .alpackages
+      uses: actions/cache@v3
+      with:
+        path: .alpackages
+        key: ${{ runner.os }}-alpackages-${{ hashFiles('**/app.json') }}
+        restore-keys: |
+          ${{ runner.os }}-alpackages-
+    
+    - name: Install AL Language Extension dependencies
+      run: |
+        Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2143311" -OutFile "al-compiler.vsix"
+        mkdir -p ${env:USERPROFILE}\.alpackages
+    
+    - name: Download BC Symbols
+      run: |
+        New-Item -ItemType Directory -Force -Path ".alpackages"
+        # Download symbols code here
+        
+    - name: Compile AL App
+      run: |
+        # Compile AL app code here
+        # Example: alc.exe /project:. /packagecachepath:.alpackages /out:./app.app
+        
+    - name: Run AL Tests
+      run: |
+        # Run AL tests code here
+        # Output test results to test-results.json
+        
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: test-results.json
+        
+    - name: Upload App Package
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-package
+        path: ./app.app
+    
+    # Only continue to Docker build if this is a push to production (not PR)
+    - name: Set build outputs
+      id: vars
+      run: |
+        echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+        echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        echo "::set-output name=docker_tag::$(date +'%Y%m%d')_$(git rev-parse --short HEAD)"
+
+  docker-build-push:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download App Package
+        uses: actions/download-artifact@v3
+        with:
+          name: app-package
+          path: ./app-package
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/bc-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/bc-app:${{ needs.build.outputs.docker_tag }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/bc-app:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/bc-app:buildcache,mode=max
+      
+  #     - name: Trigger Portainer webhook
+  #       run: |
+  #         curl -X POST ${{ secrets.PORTAINER_WEBHOOK_URL }} \
+  #           -H "Content-Type: application/json" \
+  #           -d '{"tag": "latest"}'
+
+  # deploy:
+  #   needs: docker-build-push
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+  #   runs-on: ubuntu-latest
+    
+  #   steps:
+  #     - name: Deploy using SSH
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.VPS_HOST }}
+  #         username: ${{ secrets.VPS_USERNAME }}
+  #         key: ${{ secrets.VPS_SSH_KEY }}
+  #         script: |
+  #           # Pull latest image
+  #           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/bc-app:latest
+            
+  #           # Restart the container using the new image
+  #           # Alternatively, you could use docker-compose if you have a compose file
+  #           docker stop bc-app-container || true
+  #           docker rm bc-app-container || true
+  #           docker run -d --name bc-app-container \
+  #             --network my-network \
+  #             -e "SQL_SERVER=sql2019" \
+  #             -e "OTHER_ENV_VAR=value" \
+  #             ${{ secrets.DOCKERHUB_USERNAME }}/bc-app:latest
+            
+  #           # Clean up old images
+  #           docker image prune -f
