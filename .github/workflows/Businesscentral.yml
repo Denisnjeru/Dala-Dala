@@ -75,7 +75,6 @@ jobs:
 
   docker-build-push:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
     
     steps:
