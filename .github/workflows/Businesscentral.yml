@@ -40,31 +40,36 @@ jobs:
         New-Item -Path ".alpackages" -ItemType Directory -Force
         
         # Set BC version (adjust to match your target Business Central version)
-        $bcVersion = "22.0"
-        $country = "us"
+        $bcVersion = "24.0"
+        $country = "W1"
         
-        # Create a temporary folder for BC artifacts
-        $tempBcFolder = Join-Path $env:TEMP "BCArtifacts"
-        New-Item -Path $tempBcFolder -ItemType Directory -Force
-        
-        Write-Host "Downloading Business Central artifacts..."
+        # Get the BC artifact URL
+        Write-Host "Getting Business Central artifact URL..."
         $artifactUrl = Get-BCArtifactUrl -type OnPrem -version $bcVersion -country $country -select Latest
         Write-Host "Artifact URL: $artifactUrl"
         
-        # Download and extract AL Compiler
+        # Create path for AL compiler
         $alcPath = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "alc"
         New-Item -Path $alcPath -ItemType Directory -Force
         
+        # Download AL compiler using the correct function name
         Write-Host "Downloading AL Compiler..."
-        Download-ALLanguageFiles -artifactUrl $artifactUrl -path $alcPath
+        Download-Artifacts $artifactUrl -includePlatform -path $env:TEMP
         
-        # Verify AL compiler was downloaded successfully
+        # The compiler is located in the ModernDev folder in the artifacts
+        $alcSourcePath = Join-Path $env:TEMP "BC\$bcVersion\platform\ModernDev\program files\Microsoft Dynamics NAV\*\AL Development Environment"
+        
+        # Copy the compiler to our project
+        Write-Host "Copying AL compiler from $alcSourcePath to $alcPath"
+        Copy-Item -Path $alcSourcePath\* -Destination $alcPath -Recurse -Force
+        
+        # Verify AL compiler was copied successfully
         $alcExePath = Join-Path -Path $alcPath -ChildPath "bin\win32\alc.exe"
         if (Test-Path $alcExePath) {
-            Write-Host "AL Compiler downloaded successfully to $alcExePath"
+            Write-Host "AL Compiler copied successfully to $alcExePath"
         } else {
-            Write-Error "Failed to download AL compiler to expected path: $alcExePath"
-            Get-ChildItem -Path $alcPath -Recurse | ForEach-Object { Write-Host $_.FullName }
+            Write-Error "Failed to locate AL compiler at expected path: $alcExePath"
+            Get-ChildItem -Path $env:TEMP\BC -Recurse | Where-Object { $_.Name -eq "alc.exe" } | ForEach-Object { Write-Host "Found compiler at: $($_.FullName)" }
             exit 1
         }
       shell: pwsh
