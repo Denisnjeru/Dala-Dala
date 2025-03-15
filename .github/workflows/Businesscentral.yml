@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     
     env:
       APP_NAME: Default Publisher_Dala-Dala_
@@ -30,29 +30,46 @@ jobs:
         
     - name: Set App Version
       run: |
-        $appJsonPath = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "app.json"
-        $appJson = Get-Content $appJsonPath | ConvertFrom-Json
-        $appJson.version = $env:APP_VERSION
-        $appJson | ConvertTo-Json -Depth 100 | Set-Content $appJsonPath
-      shell: pwsh
+        # Read app.json
+        APP_JSON_PATH="$GITHUB_WORKSPACE/app.json"
+        APP_JSON=$(cat $APP_JSON_PATH)
+        
+        # Update version using jq (if available) or sed as fallback
+        if command -v jq &> /dev/null; then
+          echo "$APP_JSON" | jq ".version = \"$APP_VERSION\"" > $APP_JSON_PATH
+        else
+          # Simple sed-based replacement (may not work with complex JSON)
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$APP_VERSION\"/" $APP_JSON_PATH
+        fi
+      shell: bash
       
+
     - name: Create .alpackages Directory
       run: |
-        New-Item -Path ".alpackages" -ItemType Directory -Force
-      shell: pwsh
+        mkdir -p .alpackages
+      shell: bash
       
     - name: Setup Docker
       uses: docker/setup-buildx-action@v2
-      
+    
     - name: Compile AL App using Docker
       run: |
-        # Pull the Business Central Docker image with AL compiler
-        docker pull mcr.microsoft.com/businesscentral/sandbox:24.0
+        # Pull Microsoft's AL Development Environment image
+        docker pull mcr.microsoft.com/dynamics-nav/al
+
+        # Create a simple script to run the compiler
+        cat > compile.sh << 'EOF'
+        #!/bin/bash
+        cd /app
+        /bin/alc /project:/app /packagecachepath:/app/.alpackages /out:/app/$1.app
+        EOF
         
-        # Run the AL compiler from the Docker container
-        docker run --rm -v ${env:GITHUB_WORKSPACE}:c:\source mcr.microsoft.com/businesscentral/sandbox:24.0 PowerShell.exe -Command "& 'C:\Program Files (x86)\Microsoft Dynamics NAV\240\AL Development Environment\bin\alc.exe' /project:'c:\source' /packagecachepath:'c:\source\.alpackages' /out:'c:\source\$env:APP_NAME.app'"
-      shell: pwsh
-      
+        # Make it executable
+        chmod +x compile.sh
+        
+        # Run the AL compiler in the Docker container
+        docker run --rm -v $(pwd):/app mcr.microsoft.com/dynamics-nav/al ./compile.sh $APP_NAME
+      shell: bash
         
     - name: Upload App Package
       uses: actions/upload-artifact@v4
