@@ -28,13 +28,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Cache .alpackages
-      uses: actions/cache@v3
-      with:
-        path: .alpackages
-        key: ${{ runner.os }}-alpackages-${{ hashFiles('**/app.json') }}
-        restore-keys: |
-          ${{ runner.os }}-alpackages-
+    - name: Install Required PowerShell Modules
+      run: |
+        Install-Module NavSip -Force -Scope CurrentUser
+        Import-Module NavSip
+      shell: pwsh
+      
+    - name: Install BcContainerHelper
+      run: |
+        Install-Module BcContainerHelper -Force -Scope CurrentUser
+        Import-Module BcContainerHelper
+      shell: pwsh
     
     
     - name: Download AL Compiler
