@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     
     env:
       APP_NAME: Default Publisher_Dala-Dala_
@@ -29,53 +29,40 @@ jobs:
     - uses: actions/checkout@v3
         
     - name: Set App Version
+      shell: pwsh
       run: |
-        # Read app.json
-        APP_JSON_PATH="$GITHUB_WORKSPACE/app.json"
-        APP_JSON=$(cat $APP_JSON_PATH)
-        
-        # Update version using jq (if available) or sed as fallback
-        if command -v jq &> /dev/null; then
-          echo "$APP_JSON" | jq ".version = \"$APP_VERSION\"" > $APP_JSON_PATH
-        else
-          # Simple sed-based replacement (may not work with complex JSON)
-          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$APP_VERSION\"/" $APP_JSON_PATH
-        fi
-      shell: bash
-      
-
-    - name: Create .alpackages Directory
-      run: |
-        mkdir -p .alpackages
-      shell: bash
-      
-    - name: Setup Docker
-      uses: docker/setup-buildx-action@v2
+        $appJsonPath = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "app.json"
+        $appJson = Get-Content $appJsonPath | ConvertFrom-Json
+        $appJson.version = $env:APP_VERSION
+        $appJson | ConvertTo-Json -Depth 100 | Set-Content $appJsonPath
     
-    - name: Compile AL App using Docker
+    - name: Install BcContainerHelper
+      shell: pwsh
       run: |
-        # Pull Microsoft's AL Development Environment image
-        docker pull mcr.microsoft.com/dynamics-nav/al
-
-        # Create a simple script to run the compiler
-        cat > compile.sh << 'EOF'
-        #!/bin/bash
-        cd /app
-        /bin/alc /project:/app /packagecachepath:/app/.alpackages /out:/app/$1.app
-        EOF
+        Install-Module BcContainerHelper -Force
+        Import-Module BcContainerHelper
+    
+    - name: Compile
+      shell: pwsh
+      run: |
+        # Create/ensure .alpackages folder
+        New-Item -Path ".alpackages" -ItemType Directory -Force
         
-        # Make it executable
-        chmod +x compile.sh
-        
-        # Run the AL compiler in the Docker container
-        docker run --rm -v $(pwd):/app mcr.microsoft.com/dynamics-nav/al ./compile.sh $APP_NAME
-      shell: bash
+        # Compile with specific BC version
+        CompileAppInBcContainer `
+          -containerName $env:COMPUTERNAME `
+          -credential ([PSCredential]::new("admin", (ConvertTo-SecureString -String "pass" -AsPlainText -Force))) `
+          -updateSymbols `
+          -bcVersion "24.0" `
+          -appProject $env:GITHUB_WORKSPACE `
+          -appOutputFolder $env:GITHUB_WORKSPACE
         
     - name: Upload App Package
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.APP_NAME }}
-        path: ${{ env.APP_NAME }}.app
+        path: |
+          *.app
 
 
     
