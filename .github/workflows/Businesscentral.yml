@@ -48,28 +48,49 @@ jobs:
         $artifactUrl = Get-BCArtifactUrl -type OnPrem -version $bcVersion -country $country -select Latest
         Write-Host "Artifact URL: $artifactUrl"
         
+        # Create a custom path for the artifacts
+        $artifactPath = Join-Path $env:TEMP "BCArtifacts"
+        New-Item -Path $artifactPath -ItemType Directory -Force -ErrorAction SilentlyContinue
+        
+        # Download BC artifacts with the correct parameter (-basePath)
+        Write-Host "Downloading Business Central artifacts..."
+        $downloadedPaths = Download-Artifacts -artifactUrl $artifactUrl -includePlatform -basePath $artifactPath
+        
+        Write-Host "Download completed. Artifacts at: $downloadedPaths"
+        
+        # Get the platform path from returned array
+        $platformPath = $downloadedPaths[1]
+        Write-Host "Platform path: $platformPath"
+        
         # Create path for AL compiler
         $alcPath = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "alc"
         New-Item -Path $alcPath -ItemType Directory -Force
         
-        # Download AL compiler using the correct function name
-        Write-Host "Downloading AL Compiler..."
-        Download-Artifacts $artifactUrl -includePlatform -path $env:TEMP
+        # Find the compiler in the downloaded artifacts
+        Write-Host "Searching for AL compiler in artifacts..."
+        $alcFiles = Get-ChildItem -Path $platformPath -Filter "alc.exe" -Recurse -ErrorAction SilentlyContinue
         
-        # The compiler is located in the ModernDev folder in the artifacts
-        $alcSourcePath = Join-Path $env:TEMP "BC\$bcVersion\platform\ModernDev\program files\Microsoft Dynamics NAV\*\AL Development Environment"
-        
-        # Copy the compiler to our project
-        Write-Host "Copying AL compiler from $alcSourcePath to $alcPath"
-        Copy-Item -Path $alcSourcePath\* -Destination $alcPath -Recurse -Force
-        
-        # Verify AL compiler was copied successfully
-        $alcExePath = Join-Path -Path $alcPath -ChildPath "bin\win32\alc.exe"
-        if (Test-Path $alcExePath) {
-            Write-Host "AL Compiler copied successfully to $alcExePath"
+        if ($alcFiles.Count -gt 0) {
+            # Get the first alc.exe found
+            $alcExe = $alcFiles[0]
+            $alcSourcePath = $alcExe.Directory.Parent.FullName
+            
+            Write-Host "Found AL compiler at $($alcExe.FullName)"
+            Write-Host "Copying from $alcSourcePath to $alcPath"
+            
+            # Copy the AL compiler to our project
+            Copy-Item -Path "$alcSourcePath\*" -Destination $alcPath -Recurse -Force
+            
+            # Verify the copy was successful
+            if (Test-Path (Join-Path $alcPath "bin\win32\alc.exe")) {
+                Write-Host "AL Compiler copied successfully"
+            } else {
+                Write-Error "Failed to copy AL compiler correctly"
+                exit 1
+            }
         } else {
-            Write-Error "Failed to locate AL compiler at expected path: $alcExePath"
-            Get-ChildItem -Path $env:TEMP\BC -Recurse | Where-Object { $_.Name -eq "alc.exe" } | ForEach-Object { Write-Host "Found compiler at: $($_.FullName)" }
+            Write-Error "Could not find alc.exe in downloaded artifacts. Searching in platform path: $platformPath"
+            Get-ChildItem -Path $platformPath -Recurse | Select-Object -First 20 | ForEach-Object { Write-Host $_.FullName }
             exit 1
         }
       shell: pwsh
