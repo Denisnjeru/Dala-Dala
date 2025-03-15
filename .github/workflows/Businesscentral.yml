@@ -43,8 +43,9 @@ jobs:
         New-Item -Path ".alpackages" -ItemType Directory -Force
         New-Item -Path "alc" -ItemType Directory -Force
         
-        # Use Microsoft's vsix directly from their releases
-        Invoke-WebRequest -Uri "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-dynamics-smb/vsextensions/al/latest/vspackage" -OutFile "al-extension.vsix"
+        # Download AL compiler directly from Microsoft's storage
+        $url = "https://download.microsoft.com/download/f/9/3/f9348906-d944-4e11-8c93-e55e3df3cd74/ALLanguage.vsix"
+        Invoke-WebRequest -Uri $url -OutFile "al-extension.vsix"
         
         # VSIX files are just ZIP files with a different extension
         Rename-Item -Path "al-extension.vsix" -NewName "al-extension.zip"
@@ -55,7 +56,7 @@ jobs:
         Remove-Item -Path "temp" -Recurse -Force
         Remove-Item -Path "al-extension.zip" -Force
       shell: pwsh
-    
+
     - name: Install AL Language Extension dependencies
       run: |
         Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2143311" -OutFile "al-compiler.vsix"
