@@ -27,20 +27,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Install Required PowerShell Modules
-      run: |
-        Install-Module NavSip -Force -Scope CurrentUser
-        Import-Module NavSip
-      shell: pwsh
-      
+   
     - name: Install BcContainerHelper
       run: |
         Install-Module BcContainerHelper -Force -Scope CurrentUser
         Import-Module BcContainerHelper
       shell: pwsh
-    
-    
+          
     - name: Download AL Compiler
       run: |
         # Create directory for packages
