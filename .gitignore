@@ -19,5 +19,5 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
-#App Files (Each Person will download theier own symbols)
+#App Files (Each Person will download their own symbols)
 *.app

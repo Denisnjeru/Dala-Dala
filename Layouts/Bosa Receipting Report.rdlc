@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:SecurityType>None</rd:SecurityType>
+    </DataSource>
+  </DataSources>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <Height>2in</Height>
+        <Style />
+      </Body>
+      <Width>6.5in</Width>
+      <Page>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Fields>
+        <Field Name="payrollandstaffNo">
+          <DataField>payrollandstaffNo</DataField>
+        </Field>
+        <Field Name="No_ReceiptHeader">
+          <DataField>No_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="Date_ReceiptHeader">
+          <DataField>Date_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="Cashier_ReceiptHeader">
+          <DataField>Cashier_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="DatePosted_ReceiptHeader">
+          <DataField>DatePosted_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="TimePosted_ReceiptHeader">
+          <DataField>TimePosted_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="Narration_ReceiptHeader">
+          <DataField>Narration_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="OnBehalfOf_ReceiptHeader">
+          <DataField>OnBehalfOf_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="AmountRecieved_ReceiptHeader">
+          <DataField>AmountRecieved_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="AmountRecieved_ReceiptHeaderFormat">
+          <DataField>AmountRecieved_ReceiptHeaderFormat</DataField>
+        </Field>
+        <Field Name="GlobalDimension1Code_ReceiptHeader">
+          <DataField>GlobalDimension1Code_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="GlobalDimension2Code_ReceiptHeader">
+          <DataField>GlobalDimension2Code_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="TotalAmount_ReceiptHeader">
+          <DataField>TotalAmount_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="TotalAmount_ReceiptHeaderFormat">
+          <DataField>TotalAmount_ReceiptHeaderFormat</DataField>
+        </Field>
+        <Field Name="PostedBy_ReceiptHeader">
+          <DataField>PostedBy_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="MemberNo_ReceiptHeader">
+          <DataField>MemberNo_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="MemberName_ReceiptHeader">
+          <DataField>MemberName_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="Dep_EFT">
+          <DataField>Dep_EFT</DataField>
+        </Field>
+        <Field Name="PayMode">
+          <DataField>PayMode</DataField>
+        </Field>
+        <Field Name="Cheque_No_">
+          <DataField>Cheque_No_</DataField>
+        </Field>
+        <Field Name="ChequeDepositSlipNo_ReceiptHeader">
+          <DataField>ChequeDepositSlipNo_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="ChequeDepositSlipDate_ReceiptHeader">
+          <DataField>ChequeDepositSlipDate_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="ChequeDepositSlipType_ReceiptHeader">
+          <DataField>ChequeDepositSlipType_ReceiptHeader</DataField>
+        </Field>
+        <Field Name="Picture">
+          <DataField>Picture</DataField>
+        </Field>
+        <Field Name="CompanyName">
+          <DataField>CompanyName</DataField>
+        </Field>
+        <Field Name="Address_1">
+          <DataField>Address_1</DataField>
+        </Field>
+        <Field Name="Address_2">
+          <DataField>Address_2</DataField>
+        </Field>
+        <Field Name="City">
+          <DataField>City</DataField>
+        </Field>
+        <Field Name="Email">
+          <DataField>Email</DataField>
+        </Field>
+        <Field Name="Phone_No">
+          <DataField>Phone_No</DataField>
+        </Field>
+        <Field Name="Phone_No2">
+          <DataField>Phone_No2</DataField>
+        </Field>
+        <Field Name="PrincipleAmt">
+          <DataField>PrincipleAmt</DataField>
+        </Field>
+        <Field Name="PrincipleAmtFormat">
+          <DataField>PrincipleAmtFormat</DataField>
+        </Field>
+        <Field Name="InterestAmt">
+          <DataField>InterestAmt</DataField>
+        </Field>
+        <Field Name="InterestAmtFormat">
+          <DataField>InterestAmtFormat</DataField>
+        </Field>
+        <Field Name="ReportForNavId_7160">
+          <DataField>ReportForNavId_7160</DataField>
+        </Field>
+        <Field Name="NumberText">
+          <DataField>NumberText</DataField>
+        </Field>
+        <Field Name="AccountType_DocumentLine">
+          <DataField>AccountType_DocumentLine</DataField>
+        </Field>
+        <Field Name="AccountNo_DocumentLine">
+          <DataField>AccountNo_DocumentLine</DataField>
+        </Field>
+        <Field Name="Description_DocumentLine">
+          <DataField>Description_DocumentLine</DataField>
+        </Field>
+        <Field Name="Amount_DocumentLine">
+          <DataField>Amount_DocumentLine</DataField>
+        </Field>
+        <Field Name="Amount_DocumentLineFormat">
+          <DataField>Amount_DocumentLineFormat</DataField>
+        </Field>
+        <Field Name="ShortcutDimension1Code_DocumentLine">
+          <DataField>ShortcutDimension1Code_DocumentLine</DataField>
+        </Field>
+        <Field Name="ShortcutDimension2Code_DocumentLine">
+          <DataField>ShortcutDimension2Code_DocumentLine</DataField>
+        </Field>
+        <Field Name="Type_DocumentLine">
+          <DataField>Type_DocumentLine</DataField>
+        </Field>
+      </Fields>
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+    </DataSet>
+  </DataSets>
+</Report>
