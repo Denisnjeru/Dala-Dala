@@ -69,7 +69,7 @@ jobs:
         Write-Host "Downloading Business Central artifacts..."
         try {
           # Get the latest artifacts for w1
-          $artifactUrl = Get-BCArtifactUrl -country "w1"
+          $artifactUrl = Get-BCArtifactUrl -type OnPrem -version "24.0" -country "w1" -select Latest -ErrorAction Stop
           Write-Host "Using artifact URL: $artifactUrl"
           
           # Download the full artifact
