@@ -1,0 +1,144 @@
+name: Business Central CI/CD Pipeline
+
+on:
+  push:
+    branches: [production]
+  pull_request:
+    branches: [main, production, staging]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    env:
+      APP_NAME: Default Publisher_Dala-Dala_
+      APP_VERSION: '1.0.0.${{ github.run_number }}'
+      BC_ADMIN_USER: ${{ secrets.BC_ADMIN_USER }}
+      BC_ADMIN_PASSWORD: ${{ secrets.BC_ADMIN_PASSWORD }}
+      BC_URL: ${{ secrets.BC_URL }}
+      BC_TENANT: ${{ secrets.BC_TENANT }}
+      
+    strategy:
+      max-parallel: 2
+      matrix:
+        bc-version: ['24.0']  # Business Central version
+        al-app-version: ['24.0.0.0']  # AL App version
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Cache .alpackages
+      uses: actions/cache@v3
+      with:
+        path: .alpackages
+        key: ${{ runner.os }}-alpackages-${{ hashFiles('**/app.json') }}
+        restore-keys: |
+          ${{ runner.os }}-alpackages-
+    
+    
+    - name: Download BC AL Language Extension
+      run: |
+        # Create directory for AL Compiler
+        New-Item -Path ".alpackages" -ItemType Directory -Force
+        New-Item -Path "alc" -ItemType Directory -Force
+        
+        # Use Microsoft's vsix directly from their releases
+        Invoke-WebRequest -Uri "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-dynamics-smb/vsextensions/al/latest/vspackage" -OutFile "al-extension.vsix"
+        
+        # VSIX files are just ZIP files with a different extension
+        Rename-Item -Path "al-extension.vsix" -NewName "al-extension.zip"
+        Expand-Archive -Path "al-extension.zip" -DestinationPath "temp" -Force
+        
+        # Extract the compiler
+        Expand-Archive -Path "temp\extension\bin\Microsoft.Dynamics.Nav.CodeAnalysis.zip" -DestinationPath "alc" -Force
+        Remove-Item -Path "temp" -Recurse -Force
+        Remove-Item -Path "al-extension.zip" -Force
+      shell: pwsh
+    
+    - name: Install AL Language Extension dependencies
+      run: |
+        Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2143311" -OutFile "al-compiler.vsix"
+        mkdir -p ${env:USERPROFILE}\.alpackages
+      
+    - name: Set App Version
+      run: |
+        $appJsonPath = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "app.json"
+        $appJson = Get-Content $appJsonPath | ConvertFrom-Json
+        $appJson.version = $env:APP_VERSION
+        $appJson | ConvertTo-Json -Depth 100 | Set-Content $appJsonPath
+      shell: pwsh
+    
+      
+    - name: Download BC Symbols
+      run: |
+        New-Item -ItemType Directory -Force -Path ".alpackages"
+        # Download symbols code here
+        
+    - name: Compile AL App
+      run: |
+        $alcExe = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "alc\bin\win32\alc.exe"
+        & $alcExe /project:$env:GITHUB_WORKSPACE /packagecachepath:$env:GITHUB_WORKSPACE\.alpackages /out:$env:GITHUB_WORKSPACE\$env:APP_NAME.app
+      shell: pwsh
+        
+    - name: Run AL Tests
+      run: |
+        # Run AL tests code here
+        # Output test results to test-results.json
+        
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: test-results.json
+        
+    - name: Upload App Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.APP_NAME }}
+        path: ${{ env.APP_NAME }}.app
+
+
+    
+    # Only continue to Docker build if this is a push to production (not PR)
+    - name: Set build outputs
+      id: vars
+      run: |
+        echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+        echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        echo "::set-output name=docker_tag::$(date +'%Y%m%d')_$(git rev-parse --short HEAD)"
+
+  docker-build-push:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download App Package
+        uses: actions/download-artifact@v4
+        with:
+          name: app-package
+          path: ./app-package
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/bc-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/bc-app:${{ needs.build.outputs.docker_tag }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/bc-app:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/bc-app:buildcache,mode=max
+      
+
+
