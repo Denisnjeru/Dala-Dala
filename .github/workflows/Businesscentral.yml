@@ -72,8 +72,8 @@ jobs:
           $artifactUrl = Get-BCArtifactUrl -type OnPrem -version "24.0" -country "w1" -select Latest -ErrorAction Stop
           Write-Host "Using artifact URL: $artifactUrl"
           
-          # Download the full artifact
-          Download-Artifacts -artifactUrl $artifactUrl -includePlatform -destination $artifactsPath
+          # Download the full artifact (using basePath parameter)
+          Download-Artifacts -artifactUrl $artifactUrl -includePlatform -basePath $artifactsPath
           
           Write-Host "Download completed successfully"
         }
