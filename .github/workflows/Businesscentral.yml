@@ -69,7 +69,8 @@ jobs:
         Write-Host "Downloading Business Central artifacts..."
         try {
           # Get the latest artifacts for w1
-          $artifactUrl = Get-BCArtifactUrl -type OnPrem -version "24.0" -country "w1" -select Latest -ErrorAction Stop
+          # $artifactUrl = Get-BCArtifactUrl -type OnPrem -version "24.0" -country "w1" -select Latest -ErrorAction Stop
+          $artifactUrl ='https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/onprem/24.0.16410.18056/w1'
           Write-Host "Using artifact URL: $artifactUrl"
           
           # Download the full artifact (using basePath parameter)
