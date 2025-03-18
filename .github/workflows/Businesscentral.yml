@@ -50,7 +50,44 @@ jobs:
         # List available commands to find the correct compile function
         Write-Host "Available commands in BcContainerHelper:"
         Get-Command -Module BcContainerHelper *Compile* | Select-Object -ExpandProperty Name
-     
+      
+    - name: Download AL Compiler
+      shell: pwsh
+      run: |
+        # Create compiler directory
+        $compilerFolder = Join-Path $env:GITHUB_WORKSPACE "ALCompiler"
+        New-Item -Path $compilerFolder -ItemType Directory -Force
+        
+        # Set compiler version to download
+        $bcVersion = "24.0.0.0" # Update this to your required version
+        
+        # Download the artifacts (contains the compiler)
+        Write-Host "Downloading Business Central artifacts..."
+        Import-Module BcContainerHelper -DisableNameChecking
+        $artifactUrl = Get-BCArtifactUrl -version $bcVersion -country "w1" -select Latest
+        
+        # Download and extract the compiler
+        $tempZipFile = Join-Path $env:TEMP "bcartifacts.zip"
+        Download-File -sourceUrl $artifactUrl -destinationFile $tempZipFile
+        Write-Host "Extracting compiler..."
+        
+        # Extract just the compiler folder from the artifacts
+        Expand-Archive -Path $tempZipFile -DestinationPath $env:TEMP\bcartifacts -Force
+        Copy-Item -Path "$env:TEMP\bcartifacts\RoleTailoredClient\*\AlcProgram\*" -Destination $compilerFolder -Recurse
+        
+        # Verify alc.exe exists
+        if (Test-Path (Join-Path $compilerFolder "alc.exe")) {
+          Write-Host "Successfully downloaded AL compiler to $compilerFolder"
+          # Set environment variable for the next step
+          echo "BC_COMPILER_FOLDER=$compilerFolder" | Out-File -Append -FilePath $env:GITHUB_ENV
+        } else {
+          Write-Error "Failed to download AL compiler"
+          exit 1
+        }
+        
+        # Clean up temp files
+        Remove-Item -Path $tempZipFile -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "$env:TEMP\bcartifacts" -Recurse -Force -ErrorAction SilentlyContinue 
     
     - name: Compile AL App Directly
       shell: pwsh
@@ -58,15 +95,25 @@ jobs:
         # Create/ensure .alpackages folder
         New-Item -Path ".alpackages" -ItemType Directory -Force
         
-        # For testing, create a simple placeholder app file
-        # This is a workaround until we identify the proper compilation command
-        Write-Host "Creating placeholder app file for testing workflow..."
-        "This is a placeholder for the compiled app" | Out-File -FilePath "$env:APP_NAME$env:APP_VERSION.app"
+        # Import the BcContainerHelper module
+        Import-Module BcContainerHelper -DisableNameChecking
         
-        Write-Host "In a real scenario, you would use one of these approaches:"
-        Write-Host "1. BcContainerHelper's Compile-AppInBcContainer (if available)"
-        Write-Host "2. Direct alc.exe usage if available locally"
-        Write-Host "3. Docker-based compilation"
+        # Compile the app using BcContainerHelper with compiler folder
+        Compile-AppWithBcCompilerFolder `
+          -compilerFolder $env:BC_COMPILER_FOLDER `
+          -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $env:APP_PROJECT_FOLDER) `
+          -appOutputFolder (Join-Path $env:GITHUB_WORKSPACE $env:APP_OUTPUT_FOLDER) `
+          -appSymbolsFolder (Join-Path $env:GITHUB_WORKSPACE ".alpackages") `
+          -generateAppSymbolReference
+        
+        # Verify the app was created
+        $appFilePath = Get-ChildItem -Path $env:APP_OUTPUT_FOLDER -Filter "*.app" | Select-Object -First 1 -ExpandProperty FullName
+        if ($appFilePath) {
+          Write-Host "Successfully compiled app to: $appFilePath"
+        } else {
+          Write-Error "Failed to compile app, output file not found"
+          exit 1
+        }
         
     - name: Upload App Package
       uses: actions/upload-artifact@v4
@@ -116,6 +163,3 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/bc-app:${{ needs.build.outputs.docker_tag }}
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/bc-app:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/bc-app:buildcache,mode=max
-      
-
-
