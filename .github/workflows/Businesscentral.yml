@@ -58,37 +58,49 @@ jobs:
         $compilerFolder = Join-Path $env:GITHUB_WORKSPACE "ALCompiler"
         New-Item -Path $compilerFolder -ItemType Directory -Force
         
-        # Set compiler version to download
-        $bcVersion = "24.0.0.0" # Update this to your required version
+        # Create a temp directory for artifacts
+        $artifactsPath = Join-Path $env:TEMP "BCDownload"
+        New-Item -Path $artifactsPath -ItemType Directory -Force
         
-        # Download the artifacts (contains the compiler)
-        Write-Host "Downloading Business Central artifacts..."
+        # Import module
         Import-Module BcContainerHelper -DisableNameChecking
-        $artifactUrl = Get-BCArtifactUrl -type OnPrem -version "24.0" -country "w1" -select Latest
-        $artifactUrl
         
-        # Download and extract the compiler
-        $tempZipFile = Join-Path $env:TEMP "bcartifacts.zip"
-        Download-File -sourceUrl $artifactUrl -destinationFile $tempZipFile
-        Write-Host "Extracting compiler..."
+        # Download the artifacts more directly
+        Write-Host "Downloading Business Central artifacts..."
+        try {
+          # Get the latest artifacts for w1
+          $artifactUrl = Get-BCArtifactUrl -country "w1"
+          Write-Host "Using artifact URL: $artifactUrl"
+          
+          # Download the full artifact
+          Download-Artifacts -artifactUrl $artifactUrl -includePlatform -destination $artifactsPath
+          
+          Write-Host "Download completed successfully"
+        }
+        catch {
+          Write-Error "Failed to download artifacts: $_"
+          exit 1
+        }
         
-        # Extract just the compiler folder from the artifacts
-        Expand-Archive -Path $tempZipFile -DestinationPath $env:TEMP\bcartifacts -Force
-        Copy-Item -Path "$env:TEMP\bcartifacts\RoleTailoredClient\*\AlcProgram\*" -Destination $compilerFolder -Recurse
+        # Find the compiler
+        $alcPath = Get-ChildItem -Path $artifactsPath -Filter "alc.exe" -Recurse | Select-Object -First 1
         
-        # Verify alc.exe exists
-        if (Test-Path (Join-Path $compilerFolder "alc.exe")) {
-          Write-Host "Successfully downloaded AL compiler to $compilerFolder"
+        if ($alcPath) {
+          $alcFolder = $alcPath.DirectoryName
+          Write-Host "Found alc.exe at: $alcFolder"
+          Copy-Item -Path "$alcFolder\*" -Destination $compilerFolder -Recurse
+          
           # Set environment variable for the next step
           echo "BC_COMPILER_FOLDER=$compilerFolder" | Out-File -Append -FilePath $env:GITHUB_ENV
+          
+          Write-Host "Successfully extracted AL compiler to $compilerFolder"
         } else {
-          Write-Error "Failed to download AL compiler"
+          Write-Error "Could not find alc.exe in the downloaded artifacts"
           exit 1
         }
         
         # Clean up temp files
-        Remove-Item -Path $tempZipFile -Force -ErrorAction SilentlyContinue
-        Remove-Item -Path "$env:TEMP\bcartifacts" -Recurse -Force -ErrorAction SilentlyContinue 
+        Remove-Item -Path $artifactsPath -Recurse -Force -ErrorAction SilentlyContinue
     
     - name: Compile AL App Directly
       shell: pwsh
