@@ -104,139 +104,168 @@ jobs:
     #     Remove-Item -Path $artifactsPath -Recurse -Force -ErrorAction SilentlyContinue
   
 
-    - name: Download AL Compiler
-      shell: pwsh
-      run: |
-        # Create compiler directory
-        $compilerFolder = Join-Path $env:GITHUB_WORKSPACE "ALCompiler"
-        New-Item -Path $compilerFolder -ItemType Directory -Force
+    # - name: Download AL Compiler
+    #   shell: pwsh
+    #   run: |
+    #     # Create compiler directory
+    #     $compilerFolder = Join-Path $env:GITHUB_WORKSPACE "ALCompiler"
+    #     New-Item -Path $compilerFolder -ItemType Directory -Force
         
-        # Create a temp directory for artifacts
-        $artifactsPath = Join-Path $env:TEMP "BCDownload"
-        New-Item -Path $artifactsPath -ItemType Directory -Force
+    #     # Create a temp directory for artifacts
+    #     $artifactsPath = Join-Path $env:TEMP "BCDownload"
+    #     New-Item -Path $artifactsPath -ItemType Directory -Force
         
-        # Import module
-        Import-Module BcContainerHelper -DisableNameChecking
+    #     # Import module
+    #     Import-Module BcContainerHelper -DisableNameChecking
         
-        # Download the artifacts more directly
-        Write-Host "Downloading Business Central artifacts..."
-        try {
-          $artifactUrl ='https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/onprem/24.0.16410.18056/w1'
-          Write-Host "Using artifact URL: $artifactUrl"
+    #     # Download the artifacts more directly
+    #     Write-Host "Downloading Business Central artifacts..."
+    #     try {
+    #       $artifactUrl ='https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/onprem/24.0.16410.18056/w1'
+    #       Write-Host "Using artifact URL: $artifactUrl"
           
-          # Download the full artifact
-          Download-Artifacts -artifactUrl $artifactUrl -includePlatform -basePath $artifactsPath
+    #       # Download the full artifact
+    #       Download-Artifacts -artifactUrl $artifactUrl -includePlatform -basePath $artifactsPath
           
-          Write-Host "Download completed successfully"
-        }
-        catch {
-          Write-Error "Failed to download artifacts: $_"
-          exit 1
-        }
+    #       Write-Host "Download completed successfully"
+    #     }
+    #     catch {
+    #       Write-Error "Failed to download artifacts: $_"
+    #       exit 1
+    #     }
         
-        # Explore the downloaded structure
-        Write-Host "Exploring downloaded artifacts structure..."
-        Get-ChildItem -Path $artifactsPath -Directory | ForEach-Object {
-          Write-Host "Top-level directory: $($_.FullName)"
-        }
+    #     # Explore the downloaded structure
+    #     Write-Host "Exploring downloaded artifacts structure..."
+    #     Get-ChildItem -Path $artifactsPath -Directory | ForEach-Object {
+    #       Write-Host "Top-level directory: $($_.FullName)"
+    #     }
         
-        # The compiler is typically in the Platform folder, in the ModernDev subdirectory
-        $platformPath = Join-Path $artifactsPath "Platform"
-        if (Test-Path $platformPath) {
-          Write-Host "Platform folder found, checking for ModernDev..."
-          $modernDevPath = Join-Path $platformPath "ModernDev"
+    #     # The compiler is typically in the Platform folder, in the ModernDev subdirectory
+    #     $platformPath = Join-Path $artifactsPath "Platform"
+    #     if (Test-Path $platformPath) {
+    #       Write-Host "Platform folder found, checking for ModernDev..."
+    #       $modernDevPath = Join-Path $platformPath "ModernDev"
           
-          if (Test-Path $modernDevPath) {
-            Write-Host "ModernDev folder found, copying contents to compiler folder..."
-            Copy-Item -Path "$modernDevPath\*" -Destination $compilerFolder -Recurse
+    #       if (Test-Path $modernDevPath) {
+    #         Write-Host "ModernDev folder found, copying contents to compiler folder..."
+    #         Copy-Item -Path "$modernDevPath\*" -Destination $compilerFolder -Recurse
             
-            # Set environment variable for the next step
-            echo "BC_COMPILER_FOLDER=$compilerFolder" | Out-File -Append -FilePath $env:GITHUB_ENV
+    #         # Set environment variable for the next step
+    #         echo "BC_COMPILER_FOLDER=$compilerFolder" | Out-File -Append -FilePath $env:GITHUB_ENV
             
-            Write-Host "Successfully copied ModernDev contents to $compilerFolder"
-          } else {
-            Write-Host "ModernDev folder not found, searching for alc.exe in Platform folder..."
-            $alcSearchResult = Get-ChildItem -Path $platformPath -Filter "alc.exe" -Recurse
-            if ($alcSearchResult) {
-              $alcFolder = $alcSearchResult[0].DirectoryName
-              Write-Host "Found alc.exe at: $alcFolder"
-              Copy-Item -Path "$alcFolder\*" -Destination $compilerFolder -Recurse
+    #         Write-Host "Successfully copied ModernDev contents to $compilerFolder"
+    #       } else {
+    #         Write-Host "ModernDev folder not found, searching for alc.exe in Platform folder..."
+    #         $alcSearchResult = Get-ChildItem -Path $platformPath -Filter "alc.exe" -Recurse
+    #         if ($alcSearchResult) {
+    #           $alcFolder = $alcSearchResult[0].DirectoryName
+    #           Write-Host "Found alc.exe at: $alcFolder"
+    #           Copy-Item -Path "$alcFolder\*" -Destination $compilerFolder -Recurse
               
-              # Set environment variable for the next step
-              echo "BC_COMPILER_FOLDER=$compilerFolder" | Out-File -Append -FilePath $env:GITHUB_ENV
+    #           # Set environment variable for the next step
+    #           echo "BC_COMPILER_FOLDER=$compilerFolder" | Out-File -Append -FilePath $env:GITHUB_ENV
               
-              Write-Host "Successfully copied compiler to $compilerFolder"
-            } else {
-              Write-Error "Could not find alc.exe in the Platform folder"
-            }
-          }
-        } else {
-          Write-Host "Platform folder not found, searching entire artifacts path..."
-          $alcSearchResult = Get-ChildItem -Path $artifactsPath -Filter "alc.exe" -Recurse
-          if ($alcSearchResult) {
-            $alcFolder = $alcSearchResult[0].DirectoryName
-            Write-Host "Found alc.exe at: $alcFolder"
-            Copy-Item -Path "$alcFolder\*" -Destination $compilerFolder -Recurse
+    #           Write-Host "Successfully copied compiler to $compilerFolder"
+    #         } else {
+    #           Write-Error "Could not find alc.exe in the Platform folder"
+    #         }
+    #       }
+    #     } else {
+    #       Write-Host "Platform folder not found, searching entire artifacts path..."
+    #       $alcSearchResult = Get-ChildItem -Path $artifactsPath -Filter "alc.exe" -Recurse
+    #       if ($alcSearchResult) {
+    #         $alcFolder = $alcSearchResult[0].DirectoryName
+    #         Write-Host "Found alc.exe at: $alcFolder"
+    #         Copy-Item -Path "$alcFolder\*" -Destination $compilerFolder -Recurse
             
-            # Set environment variable for the next step
-            echo "BC_COMPILER_FOLDER=$compilerFolder" | Out-File -Append -FilePath $env:GITHUB_ENV
+    #         # Set environment variable for the next step
+    #         echo "BC_COMPILER_FOLDER=$compilerFolder" | Out-File -Append -FilePath $env:GITHUB_ENV
             
-            Write-Host "Successfully copied compiler to $compilerFolder"
-          } else {
-            # If we still can't find it, let's look for similar files
-            Write-Host "Searching for any *alc* files..."
-            $alcLikeFiles = Get-ChildItem -Path $artifactsPath -Filter "*alc*" -Recurse
-            if ($alcLikeFiles) {
-              Write-Host "Found files matching *alc* pattern:"
-              foreach ($file in $alcLikeFiles) {
-                Write-Host " - $($file.FullName)"
-              }
-            } else {
-              Write-Error "No alc-like files found in the downloaded artifacts"
-            }
-          }
-        }
+    #         Write-Host "Successfully copied compiler to $compilerFolder"
+    #       } else {
+    #         # If we still can't find it, let's look for similar files
+    #         Write-Host "Searching for any *alc* files..."
+    #         $alcLikeFiles = Get-ChildItem -Path $artifactsPath -Filter "*alc*" -Recurse
+    #         if ($alcLikeFiles) {
+    #           Write-Host "Found files matching *alc* pattern:"
+    #           foreach ($file in $alcLikeFiles) {
+    #             Write-Host " - $($file.FullName)"
+    #           }
+    #         } else {
+    #           Write-Error "No alc-like files found in the downloaded artifacts"
+    #         }
+    #       }
+    #     }
         
-        # List files in the compiler folder
-        if (Test-Path $compilerFolder) {
-          Write-Host "Files in compiler folder:"
-          Get-ChildItem -Path $compilerFolder | ForEach-Object {
-            Write-Host " - $($_.Name)"
-          }
-        }
+    #     # List files in the compiler folder
+    #     if (Test-Path $compilerFolder) {
+    #       Write-Host "Files in compiler folder:"
+    #       Get-ChildItem -Path $compilerFolder | ForEach-Object {
+    #         Write-Host " - $($_.Name)"
+    #       }
+    #     }
         
-        # Clean up temp files
-        Remove-Item -Path $artifactsPath -Recurse -Force -ErrorAction SilentlyContinue
+    #     # Clean up temp files
+    #     Remove-Item -Path $artifactsPath -Recurse -Force -ErrorAction SilentlyContinue
     
 
 
     
-    - name: Compile AL App Directly
+    # - name: Compile AL App Directly
+    #   shell: pwsh
+    #   run: |
+    #     # Create/ensure .alpackages folder
+    #     New-Item -Path ".alpackages" -ItemType Directory -Force
+        
+    #     # Import the BcContainerHelper module
+    #     Import-Module BcContainerHelper -DisableNameChecking
+        
+    #     # Compile the app using BcContainerHelper with compiler folder
+    #     Compile-AppWithBcCompilerFolder `
+    #       -compilerFolder $env:BC_COMPILER_FOLDER `
+    #       -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $env:APP_PROJECT_FOLDER) `
+    #       -appOutputFolder (Join-Path $env:GITHUB_WORKSPACE $env:APP_OUTPUT_FOLDER) `
+    #       -appSymbolsFolder (Join-Path $env:GITHUB_WORKSPACE ".alpackages") `
+    #       -generateAppSymbolReference
+        
+    #     # Verify the app was created
+    #     $appFilePath = Get-ChildItem -Path $env:APP_OUTPUT_FOLDER -Filter "*.app" | Select-Object -First 1 -ExpandProperty FullName
+    #     if ($appFilePath) {
+    #       Write-Host "Successfully compiled app to: $appFilePath"
+    #     } else {
+    #       Write-Error "Failed to compile app, output file not found"
+    #       exit 1
+    #     }
+        
+    - name: Compile AL App with packaged compiler
       shell: pwsh
       run: |
+        # Path to compiler in repository
+        $compilerFolder = Join-Path $env:GITHUB_WORKSPACE "AL-Compiler"
+        
         # Create/ensure .alpackages folder
         New-Item -Path ".alpackages" -ItemType Directory -Force
         
         # Import the BcContainerHelper module
         Import-Module BcContainerHelper -DisableNameChecking
         
-        # Compile the app using BcContainerHelper with compiler folder
+        # Compile the app using the packaged compiler
         Compile-AppWithBcCompilerFolder `
-          -compilerFolder $env:BC_COMPILER_FOLDER `
-          -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $env:APP_PROJECT_FOLDER) `
-          -appOutputFolder (Join-Path $env:GITHUB_WORKSPACE $env:APP_OUTPUT_FOLDER) `
+          -compilerFolder $compilerFolder `
+          -appProjectFolder $env:GITHUB_WORKSPACE `
+          -appOutputFolder $env:GITHUB_WORKSPACE `
           -appSymbolsFolder (Join-Path $env:GITHUB_WORKSPACE ".alpackages") `
           -generateAppSymbolReference
         
         # Verify the app was created
-        $appFilePath = Get-ChildItem -Path $env:APP_OUTPUT_FOLDER -Filter "*.app" | Select-Object -First 1 -ExpandProperty FullName
+        $appFilePath = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "*.app" | Select-Object -First 1 -ExpandProperty FullName
         if ($appFilePath) {
           Write-Host "Successfully compiled app to: $appFilePath"
         } else {
           Write-Error "Failed to compile app, output file not found"
           exit 1
         }
-        
+
     - name: Upload App Package
       uses: actions/upload-artifact@v4
       with:
