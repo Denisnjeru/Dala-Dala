@@ -255,6 +255,10 @@ jobs:
           -appProjectFolder $env:GITHUB_WORKSPACE `
           -appOutputFolder $env:GITHUB_WORKSPACE `
           -appSymbolsFolder (Join-Path $env:GITHUB_WORKSPACE ".alpackages") `
+          -EnableCodeCop:$false `
+          -EnableAppSourceCop:$false `
+          -EnablePerTenantExtensionCop:$false `
+          -EnableUICop:$false
         
         # Verify the app was created
         $appFilePath = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "*.app" | Select-Object -First 1 -ExpandProperty FullName
