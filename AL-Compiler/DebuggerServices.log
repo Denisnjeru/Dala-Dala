@@ -1,0 +1,24 @@
+﻿03/18/2025 09:59:16 [/1] Editor Services Host v14.3.20.17127 starting (pid 26088)...
+03/18/2025 09:59:16 [/1] Editor Services Host started!
+03/18/2025 09:59:19 [/9] Sending request to http://localhost:5119/STIMA2024/dev/metadata?tenant=default with request ID eb5fba94-4043-46a3-9e18-30aff3ea2c21 and session ID 315b56a6-cb61-4f1b-b487-397e06cf7760
+03/18/2025 09:59:20 [/9] Sending request to http://localhost:5119/STIMA2024/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=default with request ID bef23958-e28f-459f-8808-42345b73c8c7 and session ID 315b56a6-cb61-4f1b-b487-397e06cf7760
+03/18/2025 11:10:15 [/1] Editor Services Host v14.3.20.17127 starting (pid 16100)...
+03/18/2025 11:10:16 [/1] Editor Services Host started!
+03/18/2025 11:10:18 [/9] Sending request to http://localhost:5119/STIMA2024/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=default with request ID 79f21142-5ed0-4858-b39a-de10291966f9 and session ID 4fb5dc48-6975-4c4b-a97b-5d8f1e88ceb9
+03/18/2025 12:16:28 [/1] Editor Services Host v14.3.20.17127 starting (pid 29204)...
+03/18/2025 12:16:28 [/1] Editor Services Host started!
+03/18/2025 12:16:30 [/9] Sending request to http://localhost:5119/STIMA2024/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=default with request ID 5d26804a-e16f-4672-8bd9-6f58ac80def8 and session ID 6dd8aebf-f860-4742-ac67-78edcc7c2ecc
+03/18/2025 13:03:32 [/1] Editor Services Host v14.3.20.17127 starting (pid 13592)...
+03/18/2025 13:03:32 [/1] Editor Services Host started!
+03/18/2025 13:03:36 [/7] Sending request to http://localhost:5119/STIMA2024/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=default with request ID feef956b-c8fa-4193-9e6c-8895c683066c and session ID 40352538-a75d-4479-a42c-05721b2c2e95
+03/18/2025 15:20:11 [/1] Editor Services Host v14.3.20.17127 starting (pid 28972)...
+03/18/2025 15:20:11 [/1] Editor Services Host started!
+03/18/2025 15:20:27 [/14] SignalR hub connection established with debugger context [IdWuFzUCQsyzkFRzGI5HSQ]
+03/18/2025 15:20:27 [/14] SignalR connection send with Query parameters: "tenant" 
+03/18/2025 15:45:27 [/1] Editor Services Host v14.3.20.17127 starting (pid 3688)...
+03/18/2025 15:45:27 [/1] Editor Services Host started!
+03/18/2025 15:45:28 [/9] Sending request to http://localhost:5119/STIMA2024/dev/apps?tenant=default&SchemaUpdateMode=forcesync&DependencyPublishingOption=default with request ID ab7e5f07-89b5-436b-8eec-37534787456e and session ID 8ad126ab-729a-4aed-8b68-716bd5f47d66
+03/18/2025 15:57:04 [/1] Editor Services Host v14.3.20.17127 starting (pid 29332)...
+03/18/2025 15:57:04 [/1] Editor Services Host started!
+03/18/2025 15:57:07 [/15] SignalR hub connection established with debugger context [qADdNCSY552yHYT7pMHCuA]
+03/18/2025 15:57:07 [/15] SignalR connection send with Query parameters: "tenant" 
