@@ -10,7 +10,7 @@
 #Testing Output folder
 .output/
 #Extension App-file
-*.app
+#*.app
 #Rapid Application Development File
 rad.json
 #Translation Base-file
@@ -20,4 +20,4 @@ rad.json
 #Test results file
 TestResults.xml
 #App Files (Each Person will download their own symbols)
-*.app
+#*.app
