@@ -258,6 +258,7 @@ jobs:
           -EnableCodeCop:$false `
           -EnableAppSourceCop:$false `
           -EnablePerTenantExtensionCop:$false `
+          -assemblyProbingPaths "" `
           -EnableUICop:$false
         
         # Verify the app was created
