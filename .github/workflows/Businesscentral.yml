@@ -65,6 +65,7 @@ jobs:
         Write-Host "Downloading Business Central artifacts..."
         Import-Module BcContainerHelper -DisableNameChecking
         $artifactUrl = Get-BCArtifactUrl -type OnPrem -version "24.0" -country "w1" -select Latest
+        $artifactUrl
         
         # Download and extract the compiler
         $tempZipFile = Join-Path $env:TEMP "bcartifacts.zip"
