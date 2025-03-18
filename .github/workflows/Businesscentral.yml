@@ -248,6 +248,11 @@ jobs:
         
         # Import the BcContainerHelper module
         Import-Module BcContainerHelper -DisableNameChecking
+
+        # Find available .NET Core runtime directories
+        $dotnetCorePath = Get-ChildItem -Path "C:\Program Files\dotnet\shared\Microsoft.NETCore.App" | 
+                          Sort-Object -Property Name -Descending | 
+                          Select-Object -First 1 -ExpandProperty FullName
         
         # Compile the app using the packaged compiler
         Compile-AppWithBcCompilerFolder `
@@ -258,7 +263,7 @@ jobs:
           -EnableCodeCop:$false `
           -EnableAppSourceCop:$false `
           -EnablePerTenantExtensionCop:$false `
-          -assemblyProbingPaths "" `
+          -assemblyProbingPaths $dotnetCorePath `
           -EnableUICop:$false
         
         # Verify the app was created
