@@ -855,109 +855,109 @@ Table 50003 "Payment Header"
     end;
 
 
-    procedure ImportPVLinesFromExcel()
+    // procedure ImportPVLinesFromExcel()
 
-    var
-        TempExcelBuffer: Record "Excel Buffer" temporary;
-        FileName: Text;
-        ServerFileName: Text;
-        SheetName: Text;
-        FileMgt: Codeunit "File Management";
-        OpenObjectFile: label 'Open Object Text File';
-        SaveObjectFile: label 'Save Object Text File';
-        OpenExcelFile: label 'Open Excel File';
-        TextFileFilter: label 'Text Files (*.txt)|*.txt|All Files (*.*)|*.*';
-        ExcelFileFilter: label 'Excel Files (*.xls*)|*.xls*|All Files (*.*)|*.*';
-        MenuSuiteProcess: label 'Updating MenuSuite';
-        ReplacingProcess: label 'Replacing';
-        ReadingFile: label 'Reading File';
-        WritingFile: label 'Writing File';
-        ReadingLines: label 'Reading Lines';
-        TypeNotFoundError: label 'Type %1 not found';
-        RenumberLines: label 'Renumbering Lines';
-        NoOfLines: label 'No. of Lines';
-        CurrentLine: label 'Current Line No.';
-        OpeningExcel: label 'Opening Excel';
-        AvailableObject: label 'Available Object';
-        FindAvailableObjects: label 'Finding Available Objects';
-        CreatingSuggestion: label 'Creating Suggestion';
-        UploadingFile: label 'Uploading File to the Server temporary storage';
-        UseInMemoryObjects: label 'Object are in memory, use them ?';
-        Window: Dialog;
-        WindowLastUpdated: DateTime;
-        Counter: Integer;
-        Total: Integer;
-        FromFolder: Text;
-        Buffer: Record "Document Line";
-        PmtType: Record "Payment & Receipt Types";
-        Fosa: Record Vendor;
-    begin
-        //FileName := FileMgt.OpenFileDialog(OpenExcelFile,FileName,ExcelFileFilter);
+    // var
+    //     TempExcelBuffer: Record "Excel Buffer" temporary;
+    //     FileName: Text;
+    //     ServerFileName: Text;
+    //     SheetName: Text;
+    //     FileMgt: Codeunit "File Management";
+    //     OpenObjectFile: label 'Open Object Text File';
+    //     SaveObjectFile: label 'Save Object Text File';
+    //     OpenExcelFile: label 'Open Excel File';
+    //     TextFileFilter: label 'Text Files (*.txt)|*.txt|All Files (*.*)|*.*';
+    //     ExcelFileFilter: label 'Excel Files (*.xls*)|*.xls*|All Files (*.*)|*.*';
+    //     MenuSuiteProcess: label 'Updating MenuSuite';
+    //     ReplacingProcess: label 'Replacing';
+    //     ReadingFile: label 'Reading File';
+    //     WritingFile: label 'Writing File';
+    //     ReadingLines: label 'Reading Lines';
+    //     TypeNotFoundError: label 'Type %1 not found';
+    //     RenumberLines: label 'Renumbering Lines';
+    //     NoOfLines: label 'No. of Lines';
+    //     CurrentLine: label 'Current Line No.';
+    //     OpeningExcel: label 'Opening Excel';
+    //     AvailableObject: label 'Available Object';
+    //     FindAvailableObjects: label 'Finding Available Objects';
+    //     CreatingSuggestion: label 'Creating Suggestion';
+    //     UploadingFile: label 'Uploading File to the Server temporary storage';
+    //     UseInMemoryObjects: label 'Object are in memory, use them ?';
+    //     Window: Dialog;
+    //     WindowLastUpdated: DateTime;
+    //     Counter: Integer;
+    //     Total: Integer;
+    //     FromFolder: Text;
+    //     Buffer: Record "Document Line";
+    //     PmtType: Record "Payment & Receipt Types";
+    //     Fosa: Record Vendor;
+    // begin
+    //     //FileName := FileMgt.OpenFileDialog(OpenExcelFile,FileName,ExcelFileFilter);
 
-        File.Upload(OpenExcelFile, FromFolder, ExcelFileFilter, FileName, ServerFileName);
+    //     File.Upload(OpenExcelFile, FromFolder, ExcelFileFilter, FileName, ServerFileName);
 
-        if not File.Exists(ServerFileName) then exit;
+    //     if not File.Exists(ServerFileName) then exit;
 
-        //ServerFileName := FileMgt.UploadFileSilent(FileName);
+    //     //ServerFileName := FileMgt.UploadFileSilent(FileName);
 
-        Buffer.Reset();
-        Buffer.SetRange("Header No.", "No.");
-        if Buffer.FindFirst() then
-            Buffer.DeleteAll();
+    //     Buffer.Reset();
+    //     Buffer.SetRange("Header No.", "No.");
+    //     if Buffer.FindFirst() then
+    //         Buffer.DeleteAll();
 
-        SheetName := TempExcelBuffer.SelectSheetsName(ServerFileName);
-        TempExcelBuffer.OpenBook(ServerFileName, SheetName);
-        TempExcelBuffer.ReadSheet;
-        TempExcelBuffer.SetFilter("Row No.", '>%1', 1);
-        Total := TempExcelBuffer.Count;
-        Counter := 0;
-        Window.Open(
-          ReadingFile + ' @1@@@@@@@@@@@@@@@@@@@@@@@@\' +
-          CurrentLine + ' #2#######\' +
-          NoOfLines + '#3#######');
-        Window.Update(3, Total);
-        WindowLastUpdated := CurrentDatetime;
+    //     SheetName := TempExcelBuffer.SelectSheetsName(ServerFileName);
+    //     TempExcelBuffer.OpenBook(ServerFileName, SheetName);
+    //     TempExcelBuffer.ReadSheet;
+    //     TempExcelBuffer.SetFilter("Row No.", '>%1', 1);
+    //     Total := TempExcelBuffer.Count;
+    //     Counter := 0;
+    //     Window.Open(
+    //       ReadingFile + ' @1@@@@@@@@@@@@@@@@@@@@@@@@\' +
+    //       CurrentLine + ' #2#######\' +
+    //       NoOfLines + '#3#######');
+    //     Window.Update(3, Total);
+    //     WindowLastUpdated := CurrentDatetime;
 
-        if TempExcelBuffer.Find('-') then
-            repeat
-                Counter += 1;
+    //     if TempExcelBuffer.Find('-') then
+    //         repeat
+    //             Counter += 1;
 
-                case TempExcelBuffer."Column No." of
-                    1:
-                        begin
+    //             case TempExcelBuffer."Column No." of
+    //                 1:
+    //                     begin
 
-                            Buffer.Init;
-                            Buffer."Line No." := Counter;
-                            Buffer."Header No." := "No.";
-                            Fosa.get(TempExcelBuffer."Cell Value as Text");
-                            PmtType.Reset();
-                            PmtType.SetRange("Default Grouping", Fosa."Vendor Posting Group");
-                            PmtType.SetRange(Type, PmtType.Type::Payment);
-                            if PmtType.FindFirst() then begin
-                                //Message(PmtType.Code);
-                                Buffer.Validate(Type, PmtType.Code);
-                                Buffer.validate("Account No.", TempExcelBuffer."Cell Value as Text");
-                            end
-                            else
-                                Error('No Payment Type Set Up for this Account Type');
-                        end;
+    //                         Buffer.Init;
+    //                         Buffer."Line No." := Counter;
+    //                         Buffer."Header No." := "No.";
+    //                         Fosa.get(TempExcelBuffer."Cell Value as Text");
+    //                         PmtType.Reset();
+    //                         PmtType.SetRange("Default Grouping", Fosa."Vendor Posting Group");
+    //                         PmtType.SetRange(Type, PmtType.Type::Payment);
+    //                         if PmtType.FindFirst() then begin
+    //                             //Message(PmtType.Code);
+    //                             Buffer.Validate(Type, PmtType.Code);
+    //                             Buffer.validate("Account No.", TempExcelBuffer."Cell Value as Text");
+    //                         end
+    //                         else
+    //                             Error('No Payment Type Set Up for this Account Type');
+    //                     end;
 
-                    2:
-                        Begin
+    //                 2:
+    //                     Begin
 
-                            Evaluate(Buffer.Amount, TempExcelBuffer."Cell Value as Text");
-                            Buffer.Validate(Amount);
-                            Buffer.Insert(true);
-                        end;
-                end;
+    //                         Evaluate(Buffer.Amount, TempExcelBuffer."Cell Value as Text");
+    //                         Buffer.Validate(Amount);
+    //                         Buffer.Insert(true);
+    //                     end;
+    //             end;
 
-                if CurrentDatetime - WindowLastUpdated > 100 then begin
-                    Window.Update(1, ROUND(Counter / Total * 10000, 1));
-                    Window.Update(2, Counter);
-                    WindowLastUpdated := CurrentDatetime;
-                end;
-            until TempExcelBuffer.Next = 0;
-        Window.Close;
-    end;
+    //             if CurrentDatetime - WindowLastUpdated > 100 then begin
+    //                 Window.Update(1, ROUND(Counter / Total * 10000, 1));
+    //                 Window.Update(2, Counter);
+    //                 WindowLastUpdated := CurrentDatetime;
+    //             end;
+    //         until TempExcelBuffer.Next = 0;
+    //     Window.Close;
+    // end;
 }
 
