@@ -34,29 +34,40 @@ jobs:
       with:
         dotnet-version: '8.0.x'  # You can adjust this version as needed
         
-    # Add this step to verify .NET installation and assembly path
-    - name: Verify .NET installation and assembly path
+    - name: Create Required AL Compiler Directories
       shell: pwsh
       run: |
-        Write-Host "Checking .NET information:"
-        dotnet --info
+        # Path to compiler in repository
+        $compilerFolder = Join-Path $env:GITHUB_WORKSPACE "AL-Compiler"
+        $dllsPath = Join-Path $compilerFolder "dlls"
         
-        Write-Host "Checking Microsoft.NET Assembly paths:"
-        $assemblyPath = "C:\Program Files\dotnet\shared\Microsoft.NETCore.App"
+        # Create the main directories structure
+        $requiredDirs = @(
+          (Join-Path $dllsPath "OpenXML"),
+          (Join-Path $dllsPath "Service"),
+          (Join-Path $dllsPath "Mock Assemblies"),
+          (Join-Path $dllsPath "shared")
+        )
         
-        if (Test-Path $assemblyPath) {
-            Write-Host "✅ Assembly path exists at $assemblyPath"
-            $versions = Get-ChildItem -Path $assemblyPath -Directory | Sort-Object -Property Name -Descending
-            Write-Host "Available .NET Core runtime versions:"
-            $versions | ForEach-Object { Write-Host " - $($_.Name)" }
-            
-            # Store the latest version path for later use
-            $latestVersion = $versions | Select-Object -First 1 -ExpandProperty FullName
-            Write-Host "Using latest version: $latestVersion"
-            echo "DOTNET_CORE_PATH=$latestVersion" | Out-File -Append -FilePath $env:GITHUB_ENV
-        } else {
-            Write-Error "❌ Assembly path does not exist at $assemblyPath"
-            exit 1
+        foreach ($dir in $requiredDirs) {
+          if (-not (Test-Path $dir)) {
+            New-Item -Path $dir -ItemType Directory -Force
+            Write-Host "Created directory: $dir"
+          }
+        }
+        
+        # Create compiler bin structure if needed
+        $binPath = Join-Path $compilerFolder "compiler/extension/bin"
+        if (-not (Test-Path $binPath)) {
+          New-Item -Path $binPath -ItemType Directory -Force
+          Write-Host "Created compiler bin directory: $binPath"
+        }
+        
+        # Create compiler analyzers path if needed
+        $analyzersPath = Join-Path $binPath "Analyzers"
+        if (-not (Test-Path $analyzersPath)) {
+          New-Item -Path $analyzersPath -ItemType Directory -Force
+          Write-Host "Created analyzers directory: $analyzersPath"
         }
         
     - name: Set App Version
@@ -284,18 +295,50 @@ jobs:
         $dotnetCorePath = Get-ChildItem -Path "C:\Program Files\dotnet\shared\Microsoft.NETCore.App" | 
                           Sort-Object -Property Name -Descending | 
                           Select-Object -First 1 -ExpandProperty FullName
+        Write-Host "Using .NET Core path: $dotnetCorePath"
         
+        # Create array of assembly probing paths
+        $probingPaths = @(
+          (Join-Path $compilerFolder "dlls\OpenXML"),
+          (Join-Path $compilerFolder "dlls\Service"),
+          (Join-Path $compilerFolder "dlls\Mock Assemblies"),
+          (Join-Path $compilerFolder "dlls\shared"),
+          $dotnetCorePath,
+          "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\$($dotnetCorePath.Split('\')[-1])",
+          "C:\Windows\Microsoft.NET\Assembly"
+        )
+
+        # Join paths for the -assemblyProbingPaths parameter
+        $assemblyProbingPathsStr = $probingPaths -join ','
+        Write-Host "Assembly probing paths: $assemblyProbingPathsStr"
+
+
         # Compile the app using the packaged compiler
-        Compile-AppWithBcCompilerFolder `
-          -compilerFolder $compilerFolder `
-          -appProjectFolder $env:GITHUB_WORKSPACE `
-          -appOutputFolder $env:GITHUB_WORKSPACE `
-          -appSymbolsFolder (Join-Path $env:GITHUB_WORKSPACE ".alpackages") `
-          -EnableCodeCop:$false `
-          -EnableAppSourceCop:$false `
-          -EnablePerTenantExtensionCop:$false `
-          -assemblyProbingPaths $dotnetCorePath `
-          -EnableUICop:$false
+        try {
+          Compile-AppWithBcCompilerFolder `
+            -compilerFolder $compilerFolder `
+            -appProjectFolder $env:GITHUB_WORKSPACE `
+            -appOutputFolder $env:GITHUB_WORKSPACE `
+            -appSymbolsFolder (Join-Path $env:GITHUB_WORKSPACE ".alpackages") `
+            -EnableCodeCop:$false `
+            -EnableAppSourceCop:$false `
+            -EnablePerTenantExtensionCop:$false `
+            -assemblyProbingPaths $assemblyProbingPathsStr `
+            -EnableUICop:$false
+        }
+        catch {
+          Write-Warning "Compilation error: $_"
+          Write-Host "Error details: $($_.Exception.Message)"
+          
+          # Try with more minimal parameters if the first attempt fails
+          Write-Host "Attempting simplified compilation..."
+          Compile-AppWithBcCompilerFolder `
+            -compilerFolder $compilerFolder `
+            -appProjectFolder $env:GITHUB_WORKSPACE `
+            -appOutputFolder $env:GITHUB_WORKSPACE `
+            -appSymbolsFolder (Join-Path $env:GITHUB_WORKSPACE ".alpackages") `
+            -assemblyProbingPaths $assemblyProbingPathsStr
+        }
         
         # Verify the app was created
         $appFilePath = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter "*.app" | Select-Object -First 1 -ExpandProperty FullName
