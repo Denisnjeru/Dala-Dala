@@ -235,10 +235,9 @@ Page 50006 "PV Card"
 
                 trigger OnAction()
                 begin
-                    if Confirm('Are you sure you want to Import Lines?') then begin
-                        ImportPVLinesFromExcel();
-
-                    end;
+                    // if Confirm('Are you sure you want to Import Lines?') then begin
+                    //     //  ImportPVLinesFromExcel();
+                    // end;
                 end;
             }
             action("Post Payment")
