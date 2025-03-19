@@ -27,6 +27,37 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+  
+    # Add this step to install .NET SDK
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.2'  # You can adjust this version as needed
+        
+    # Add this step to verify .NET installation and assembly path
+    - name: Verify .NET installation and assembly path
+      shell: pwsh
+      run: |
+        Write-Host "Checking .NET information:"
+        dotnet --info
+        
+        Write-Host "Checking Microsoft.NET Assembly paths:"
+        $assemblyPath = "C:\Program Files\dotnet\shared\Microsoft.NETCore.App"
+        
+        if (Test-Path $assemblyPath) {
+            Write-Host "✅ Assembly path exists at $assemblyPath"
+            $versions = Get-ChildItem -Path $assemblyPath -Directory | Sort-Object -Property Name -Descending
+            Write-Host "Available .NET Core runtime versions:"
+            $versions | ForEach-Object { Write-Host " - $($_.Name)" }
+            
+            # Store the latest version path for later use
+            $latestVersion = $versions | Select-Object -First 1 -ExpandProperty FullName
+            Write-Host "Using latest version: $latestVersion"
+            echo "DOTNET_CORE_PATH=$latestVersion" | Out-File -Append -FilePath $env:GITHUB_ENV
+        } else {
+            Write-Error "❌ Assembly path does not exist at $assemblyPath"
+            exit 1
+        }
         
     - name: Set App Version
       shell: pwsh
@@ -281,7 +312,6 @@ jobs:
         name: ${{ env.APP_NAME }}
         path: |
           *.app
-
     
     # Only continue to Docker build if this is a push to production (not PR)
     - name: Set build outputs
