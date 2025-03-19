@@ -26,11 +26,11 @@ jobs:
         al-app-version: ['24.0.0.0']  # AL App version
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
   
     # Add this step to install .NET SDK
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.2'  # You can adjust this version as needed
         
