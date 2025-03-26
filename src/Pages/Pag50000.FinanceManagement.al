@@ -97,9 +97,6 @@ page 50000 "Finance Management"
                         RunObject = Page "Account Schedule Names";
                     }
 
-
-
-
                 }
                 //FINish
                 group(CashManagement)
@@ -110,7 +107,7 @@ page 50000 "Finance Management"
                     {
                         ApplicationArea = RelationshipMgmt;
                         Caption = 'Bank Account List';
-                        Image = "Order";
+                        Image = Bank;
 
 
                         RunObject = Page "Bank Account List";
