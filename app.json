@@ -16,10 +16,6 @@
   "application": "24.0.0.0",
   "idRanges": [
     {
-      "from": 52188423,
-      "to": 52189422
-    },
-    {
       "from": 50000,
       "to": 59999
     }
@@ -29,8 +25,8 @@
     "allowDownloadingSource": true,
     "includeSourceInSymbolFile": true
   },
-  "runtime": "13.0",
-  "features": [
-    "NoImplicitWith"
-  ]
+  "target": "OnPrem",
+  "runtime": "13.0"
+ 
+  
 }
