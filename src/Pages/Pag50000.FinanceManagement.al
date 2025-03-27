@@ -12,6 +12,18 @@ using Microsoft.Purchases.Document;
 using Microsoft.Purchases.Vendor;
 using Microsoft.Sales.Reports;
 using Microsoft.Sales.History;
+using System.Environment;
+using System.Visualization;
+using Microsoft.Finance.RoleCenters;
+using Microsoft.Intercompany;
+using Microsoft.Foundation.Task;
+using System.Email;
+using System.Automation;
+using Microsoft.RoleCenters;
+using Microsoft.Sales.Analysis;
+using System.Threading;
+using Microsoft.CashFlow.Forecast;
+using Microsoft.EServices.EDocument;
 using Microsoft.Sales.Document;
 using Microsoft.Sales.Customer;
 using Microsoft.Bank.Reconciliation;
@@ -28,12 +40,70 @@ page 50000 "Finance Management"
     {
         area(rolecenter)
         {
-
-            systempart(MyNotes; MyNotes)
+            part(Control76; "Headline RC Accountant")
             {
                 ApplicationArea = Basic, Suite;
-                visible = true;
-                ;
+            }
+            part(Control99; "Finance Performance")
+            {
+                ApplicationArea = Basic, Suite;
+                Visible = false;
+            }
+            part(Control1902304208; "Accountant Activities")
+            {
+                ApplicationArea = Basic, Suite;
+            }
+            part("Intercompany Activities"; "Intercompany Activities")
+            {
+                ApplicationArea = Intercompany;
+            }
+            part("User Tasks Activities"; "User Tasks Activities")
+            {
+                ApplicationArea = Suite;
+            }
+            part("Emails"; "Email Activities")
+            {
+                ApplicationArea = Basic, Suite;
+            }
+            part(ApprovalsActivities; "Approvals Activities")
+            {
+                ApplicationArea = Suite;
+            }
+            part(Control123; "Team Member Activities")
+            {
+                ApplicationArea = Suite;
+            }
+            part(Control1907692008; "My Accounts")
+            {
+                ApplicationArea = Basic, Suite;
+            }
+            part(Control103; "Trailing Sales Orders Chart")
+            {
+                ApplicationArea = Basic, Suite;
+                Visible = false;
+            }
+            part(Control106; "My Job Queue")
+            {
+                ApplicationArea = Basic, Suite;
+                Visible = false;
+            }
+            part(Control9; "Help And Chart Wrapper")
+            {
+                ApplicationArea = Basic, Suite;
+            }
+            part(Control100; "Cash Flow Forecast Chart")
+            {
+                ApplicationArea = Basic, Suite;
+            }
+            part(Control108; "Report Inbox Part")
+            {
+                AccessByPermission = TableData "Report Inbox" = IMD;
+                ApplicationArea = Basic, Suite;
+            }
+            
+            systempart(Control1901377608; MyNotes)
+            {
+                ApplicationArea = Basic, Suite;
             }
         }
     }
